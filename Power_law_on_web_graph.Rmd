@@ -1,0 +1,144 @@
+---
+title: "StatsHW2"
+Authors/Collaborators: Ahmed Mostafa, Hamed Asadollahi, Mostafa Awid 
+output: html_document
+---
+we are going to use igraph library
+```{r}
+library(igraph) # Load the igraph package
+```
+
+simulating node and edges creation
+```{r}
+generateGraph_singleOutDegree <- function(gamma=0.5){
+g1 <- graph( edges=c(1,2, 2,3, 3,4, 4,1 ), n=4, directed=T ) 
+maxNV = 10000
+nV = 4
+while(nV<maxNV)
+{
+  y = runif(1)
+  g1 = add.vertices(g1,c(1))
+  if (y <= gamma)
+  {
+    toV = sample(1:nV,1)
+    g1 = add.edges(g1,c(nV+1,toV))
+  }else
+  {
+    indegree = degree(g1, mode = c("in"))
+    pToBeCopied = indegree/nV
+    pToBeCopied = head(pToBeCopied,-1)
+    toV = sample(1:nV,size=1,prob=pToBeCopied)
+    g1 = add.edges(g1,c(nV+1,toV))
+    #print("Y")
+    #print(toV)
+    
+  }
+  nV=nV+1
+}
+return(g1)
+}
+
+generateGraph_threeOutDegree <- function(gamma=0.5){
+g1 <- graph.full(4,directed = T)
+maxNV = 10000
+nV = 4
+while(nV<maxNV)
+{
+  y = runif(1)
+  g1 = add.vertices(g1,c(1))
+  if (y <= gamma)
+  {
+    toV = sample(1:nV,3) #selecting 3 nodes
+    for (i in toV)
+    {
+       g1 = add.edges(g1,c(nV+1,i))
+    }
+    
+  }else
+  {
+    indegree = degree(g1, mode = c("in"))
+    pToBeCopied = indegree/nV
+    pToBeCopied = head(pToBeCopied,-1)
+    toV = sample(1:nV,size=3,prob=pToBeCopied)
+    for (i in toV)
+    {
+       g1 = add.edges(g1,c(nV+1,i))
+    }  
+    
+  }
+  nV=nV+1
+}
+return(g1)
+}
+```
+
+
+Let's generate one graph g1 
+```{r}
+g1 = generateGraph_singleOutDegree(0.5)
+
+```
+
+
+Let's show the log-log plot of the degree_distribution of g1 
+and the cumulative degree distribution
+```{r}
+plot(degree_distribution(g1), log = "xy")
+plot(degree_distribution(g1,cumulative = T), log = "xy")
+```
+As by the homework introduction and by the nature of the "preferential" attachement that implies power law.
+also By looking at the plot we can tell that it is following a power law 
+lets try fitting it into power law distribution using igraph method fit_power_law
+```{r}
+fit_power_law(degree_distribution(g1))
+```
+lets compare it to a simulated poisson distribution of similar paramters 
+which reflects the differences between the two distributions
+```{r}
+g1_degree_dist = degree_distribution(g1)
+plot(dpois(0:length(g1_degree_dist), lambda = 1), log="xy")
+```
+
+Now lets go deeper into exploring the factor of having "preferential" attachement 
+Let generate graph g2 with gamma = 1 which will lead to a random network 
+
+```{r}
+g2 = generateGraph_singleOutDegree(1)
+```
+
+lets show the log-log plot of g2 degree distribution and cumulative degree distribution
+the plots shows that it follows a poisson distribution
+
+```{r}
+plot(degree_distribution(g2))
+plot(degree_distribution(g2), log = "xy")
+plot(degree_distribution(g2,cumulative = T), log = "xy")
+```
+
+
+Lets try generating the graphs with out_degree = 3
+
+```{r}
+g3 = generateGraph_threeOutDegree(0.5)
+```
+
+Plotting the graphs 
+
+```{r}
+plot(degree_distribution(g3), log = "xy")
+plot(degree_distribution(g3,cumulative = T), log = "xy")
+```
+It shows the similar distribution to g1, just "shifted" by 2 (the difference in the out_degrees)
+And so the same rules with the poisson/power law distributions apply
+
+lets draw g1 and g3 in_distributions to show the similarities 
+```{r}
+plot(degree_distribution(g1, cumulative = T, mode="in"),log = "xy")
+plot(degree_distribution(g3, cumulative = T, mode="in"),log = "xy")
+```
+
+lets try fitting it into power law distribution using igraph method fit_power_law
+```{r}
+fit_power_law(degree_distribution(g3))
+```
+
